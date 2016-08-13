@@ -1,0 +1,58 @@
+load "Element_P3";
+
+int n=300;
+
+mesh Th = square(n,1,[x,y/50]);
+plot(Th,wait=1,aspectratio=1);
+
+fespace Vh(Th,P1);
+
+//Vh u,v;
+
+varf a(u,v) = int1d(Th,1)(dxx(u)*dxx(v))+on(2,3,4,u=0);
+varf b(u,v) = int1d(Th,1)(u*v)+on(2,3,4,u=0);
+
+matrix A = a(Vh,Vh,solver=GMRES);
+matrix B = b(Vh,Vh,solver=GMRES);
+
+int nev = 12;
+
+real[int] lambda(nev);
+Vh[int] u(nev);
+
+int k = EigenValue(A,B,sym=true,sigma=0,
+		   value=lambda,vector=u,
+		   tol=1.e-10,maxit=0,ncv=0);
+
+for (int i=0; i<nev; i++) {
+  cout << lambda[i] << endl;
+  plot(u[i],wait=1,fill=0,cmm="Eigenvalue: "+lambda[i]);
+ }
+
+/*
+-0.100278
+-0.0412104
+-0.038388
+-0.0220995
+-0.00831471
+0.00789584
+0.0325042
+0.054865
+0.0869519
+0.090615
+0.114915
+0.126174
+============
+-0.831503
+-0.745244
+-0.114878
+0.0915775
+0.138356
+0.237598
+0.326918
+0.367689
+0.408988
+0.596606
+0.691189
+0.719238
+*/

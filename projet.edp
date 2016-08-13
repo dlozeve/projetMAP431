@@ -1,0 +1,87 @@
+/* Mini-projet d'analyse numérique (MAP431)
+   Calcul de fréquences propres de vibration
+   Dimitri Lozeve, Philippe Cherabier
+*/
+
+load "Element_P3";
+
+// Mesh generation
+
+// number of vertices for each edge
+int n = 10;
+/*
+int n;
+cout << "Number of vertices = ? ";
+cin >> n;
+*/
+
+//*
+// Cocotte
+border c01(t=0,1){ x=t; y=2+t; }
+border c02(t=0,1){ x=t; y=2; }
+border c03(t=0,1){ x=1; y=2*t; }
+border c04(t=0,1){ x=1+t; y=0; }
+border c05(t=0,1){ x=2+t; y=t; }
+border c06(t=0,1){ x=2+t; y=1; }
+border c07(t=0,1){ x=2; y=1+t; }
+border c08(t=0,1){ x=2-t; y=2+t; }
+
+plot(c01(-n)+c02(n)+c03(-2*n)+c04(n)+c05(n)+c06(-n)+c07(n)+c08(n),wait=1);
+mesh Th = buildmesh(c01(-n)+c02(n)+c03(-2*n)+c04(n)+c05(n)+c06(-n)+c07(n)+c08(n));
+//*/
+/*
+// Flèche
+border c01(t=0,1){ x=0; y=2+t; }
+border c02(t=0,1){ x=t; y=2; }
+border c03(t=0,1){ x=1; y=1+t; }
+border c04(t=0,1){ x=1+t; y=1-t; }
+border c05(t=0,1){ x=2; y=t; }
+border c06(t=0,1){ x=2+t; y=1; }
+border c07(t=0,1){ x=1+2*t; y=3-2*t; }
+border c08(t=0,1){ x=t; y=3; }
+
+plot(c01(-n)+c02(n)+c03(-n)+c04(n)+c05(n)+c06(n)+c07(-2*n)+c08(-n),wait=1);
+mesh Th = buildmesh(c01(-n)+c02(n)+c03(-n)+c04(n)+c05(n)+c06(n)+c07(-2*n)+c08(-n));
+//*/
+
+plot(Th,wait=1,ps="mesh.eps");
+
+// Variational space definition
+fespace Vh(Th,P3);
+
+// Variational problem definition
+varf a(u,v) = int2d(Th)(dx(u)*dx(v) + dy(u)*dy(v))
+  + on(c01,c02,c03,c04,c05,c06,c07,c08,u=0);
+
+varf b(u,v) = int2d(Th)(u*v);
+
+// Matrices computation
+matrix A = a(Vh,Vh,solver=sparsesolver);
+matrix B = b(Vh,Vh,solver=sparsesolver);
+
+// Number of eigenvalues desired
+int nev = 12;
+// Arrays to keep eigenvalues and eigenvectors
+real[int] lambda(nev);
+Vh[int] u(nev);
+
+// Resolution of the problem
+int k = EigenValue(A,B,sym=true,sigma=0,
+		   value=lambda,vector=u,tol=1.e-10,ncv=0,maxit=0);
+
+/*
+// Saving eigenvalues
+{
+  ofstream f("eigenvalues.txt",append);
+  for (int i=0; i<nev; i++) {
+    f << lambda[i] << "\t";
+  }
+};
+*/
+
+// Plotting eigenvectors
+for (int i=0; i<nev; i++) {
+  plot(u[i],wait=1,fill=1,ps="cocotte"+(i+1)+".eps");
+       //       cmm="Eigenvalue: "+lambda(i));
+ }
+
